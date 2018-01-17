@@ -1,4 +1,4 @@
-import './libs/d3/d3'; 
+import './libs/d3/d3';
 import TimeSeries from 'app/core/time_series2';
 import kbn from 'app/core/utils/kbn';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
@@ -30,6 +30,25 @@ const panelDefaults = {
 		current: true,
 		total: true
 	},
+  /**
+   * @detangleEdit start
+   * @author Ural
+   */
+  // Detangle Options
+  detangle: {
+    coupling: false,
+    sortingOrder: 'desc',
+    limit: null,
+    metric: 'coupling',
+    sourceType: '$issue_type',
+    targetType: '$target_issue_type',
+    sourceTypeData: '',
+    targetTypeData: '',
+  },
+  /**
+   * @detangleEdit end
+   * @author Ural
+   */
 	maxDataPoints: 100,
 	mappingType: 1,
 	nullPointMode: 'connected',
@@ -52,10 +71,11 @@ const panelDefaults = {
 };
 
 class HeatmapCtrl extends MetricsPanelCtrl {
-	constructor($scope, $injector, $sce) {
+	constructor($scope, $injector, $sce, detangleSrv, templateSrv) {
 		super($scope, $injector);
 		_.defaults(this.panel, panelDefaults);
-		
+    this.detangleSrv = detangleSrv;
+    this.templateSrv = templateSrv;
 		this.options = panelOptions;
 		this.panel.chartId = 'chart_' + this.panel.id;
 		this.containerDivId = 'container_'+this.panel.chartId;
@@ -65,7 +85,7 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 		this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
 		this.initializePanel();
 	}
-	
+
 	initializePanel(){
 		var d3plusPath = 'plugins/'+pluginName+'/libs/d3plus/d3plus.full.js';
 		var _this = this;
@@ -73,7 +93,7 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 		meta[d3plusPath] = {
 			      format: 'global'
 	    };
-		
+
 		SystemJS.config({
 			  meta: meta
 			});
@@ -82,46 +102,81 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 			console.log('d3plus is loaded');
 			_this.events.emit('data-received');
 		});
+
+    /**
+     * @detangleEdit start
+     * @author Ural
+     */
+    this.sortingOrder = [
+      {text: 'Ascending', value: 'asc'},
+      {text: 'Descending', value: 'desc'},
+    ];
+
+    this.couplingMetrics = [
+      {text: 'Coupling Value', value: 'coupling'},
+      {text: 'Num. of Couples', value: 'couplecounts'},
+    ];
+    /**
+     * @detangleEdit end
+     * @author Ural
+     */
 	}
-	
+
 	handleError(err){
 		this.getPanelContainer().html('<p>Error:</p><pre>' + err + '</pre>');
 	}
-	
+
 	onInitEditMode() {
 		this.addEditorTab('Heatmap', heatmapEditor, 2);
 		this.addEditorTab('Display', displayEditor, 3);
-	}
-	
+    this.addEditorTab('Detangle', 'public/app/plugins/panel/graph/detangle.html', 4);
+
+  }
+
 	getPanelContainer(){
 		return $(document.getElementById(this.containerDivId));
 	}
-	
+
 	onDataReceived(dataList){
 		console.info('received data');
 		console.debug(dataList);
 		if(undefined != dataList) {
+      /**
+       * @detangleEdit start
+       * @author Ural
+       */
+      this.panel.detangle.sourceTypeData = this.templateSrv.replaceWithText(this.panel.detangle.sourceType, this.panel.scopedVars);
+      this.panel.detangle.targetTypeData = this.templateSrv.replaceWithText(this.panel.detangle.targetType, this.panel.scopedVars);
+
+      if (this.panel.detangle.coupling) {
+        dataList = this.detangleSrv.dataConvertor(dataList, this.panel.detangle, 'file');
+      }
+      /**
+       * @detangleEdit end
+       * @author Ural
+       */
 			this.series = dataList.map(this.seriesHandler.bind(this));
 			console.info('mapped dataList to series');
+			console.log(this.series);
 		}
 
 		var preparedData = this.d3plusDataProcessor(this.series);
 		this.render(preparedData);
 	}
-	
+
 	getGroupKeys(){
 		return this.panel.treeMap.groups.map(function(group){
 			return group.key;
 		});
 	}
-	
+
 	/**
 	 * Prepare data for d3plus
 	 */
 	d3plusDataProcessor(dataArray){
 		var resultArray = [];
 		var hasGroups = (this.panel.treeMap.groups.length > 0)
-		
+
 		if(!hasGroups){
 			// just add the original items since there are no groups
 			for (var dataIndex=0; dataIndex < dataArray.length; dataIndex++){
@@ -144,7 +199,7 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 					Object.assign(newDataItem, dataArray[dataIndex].stats);
 				}
 				delete newDataItem.stats;
-				
+
 				for(var groupIndex=0; groupIndex < groupArray.length; groupIndex++){
 					var key = groupArray[groupIndex].key;
 					var regex = groupArray[groupIndex].regex;
@@ -159,7 +214,7 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 			}
 		}
 
-		
+
 		// If we're using timeBlocks mode
 		// replace the aggregated series with individual records
 		if(this.panel.treeMap.enableTimeBlocks){
@@ -179,11 +234,11 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 				}
 			}
 			resultArray = timeBlockArray;
-		} 
-		
+		}
+
 		return resultArray;
 	}
-	
+
 	/**
 	 * Series Handler
 	 */
@@ -195,11 +250,11 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 	    series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
 	    return series;
 	} // End seriesHandler()
-	
+
 	addSeriesOverride(override) {
 		this.panel.seriesOverrides.push(override || {});
 	}
-	
+
 	addTreeMapGroup(group) {
 		this.panel.treeMap.groups.push(group || {});
 	}
@@ -208,30 +263,30 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 		this.panel.seriesOverrides = _.without(this.panel.seriesOverrides, override);
 	    this.render();
 	}
-	
+
 	removeTreeMapGroup(group) {
 		this.panel.treeMap.groups = _.without(this.panel.treeMap.groups, group);
 	    this.render();
 	}
-	
+
 	updateThresholds(){
 		var thresholdCount = this.panel.thresholds.length;
 		var colorCount = this.panel.colors.length;
 		this.refresh();
 	}
-	
+
 	changeColor(colorIndex, color){
 		this.panel.colors[colorIndex] = color;
 	}
-	
+
 	removeColor(colorIndex){
 		this.panel.colors.splice(colorIndex,1);
 	}
-	
+
 	addColor(){
 		this.panel.colors.push('rgba(255, 255, 255, 1)');
 	}
-	
+
 	getGradientForValue(data, value){
 		var min = Math.min.apply(Math, data.thresholds);
 		var max = Math.max.apply(Math, data.thresholds);
@@ -242,10 +297,10 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 		xPercent = Math.min(0.99, xPercent);
 		// Get the larger number to clamp at 0.01 min
 		xPercent = Math.max(0.01, xPercent);
-		
+
 		return getColorByXPercentage(this.canvas, xPercent);
 	}
-	
+
 	applyOverrides(seriesItemAlias){
 		var seriesItem = {}, colorData = {}, overrides = {};
 		console.info('applying overrides for seriesItem');
@@ -263,33 +318,33 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 		});
 		colorData.colorMap = this.panel.colors;
 		seriesItem.colorData = colorData;
-		
+
 		seriesItem.valueName = overrides.valueName || this.panel.valueName;
-		
+
 		return seriesItem;
 	}
-	
+
 	invertColorOrder() {
 	    this.panel.colors.reverse();
 	    this.refresh();
 	}
-	
+
 	addTreeMapId(){
 		this.panel.treeMap.ids.push('');
 		this.refresh();
 	}
-	
+
 	removeTreeMapId(pos){
 		this.panel.treeMap.ids.splice(pos,1);
 		this.refresh();
 	}
-	
+
 	changeTreeMapId(idString, pos){
 		this.panel.treeMap.ids[pos] = idString;
 	}
-	
+
 	// #############################################
-	// link 
+	// link
 	// #############################################
 
 	link(scope, elem, attrs, ctrl) {
@@ -299,20 +354,20 @@ class HeatmapCtrl extends MetricsPanelCtrl {
     	console.debug('found chartContainer');
     	console.debug(chartContainer);
     	elem.css('height', ctrl.height + 'px');
-    	
+
     	var canvas = elem.find('.canvas')[0];
 	    ctrl.canvas = canvas;
 	    var gradientValueMax = elem.find('.gradient-value-max')[0];
 	    var gradientValueMin = elem.find('.gradient-value-min')[0];
-	    
+
 
     	var visFormat =
-		{ 
+		{
 			"text" : function(text, opts) {
 				if(opts.key == 'timestamp'){
 					var timestamp = moment(Number(text));
 					return timestamp.format(ctrl.panel.treeMap.timestampFormat);
-				} 
+				}
 				else if(ctrl.getGroupKeys().indexOf(opts.key)>-1) {
 					return text;
 				}
@@ -321,19 +376,19 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 				}
 			}
 		};
-    	
+
 
     	function render(data){
     		updateSize();
     		updateCanvasStyle();
     		updateChart(data);
     	}
-    	
+
     	function updateCanvasStyle(){
 	    	canvas.width = Math.max(chartElement[0].clientWidth, 100);
 			var canvasContext = canvas.getContext("2d");
 			canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-			
+
 			var grd = canvasContext.createLinearGradient(0, 0, canvas.width, 0);
 			var colorWidth = 1 / Math.max(ctrl.panel.colors.length, 1);
 			for(var i=0; i<ctrl.panel.colors.length; i++){
@@ -343,33 +398,33 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 			canvasContext.fillStyle = grd;
 			canvasContext.fillRect(0, 0, canvas.width, 3);
     		ctrl.canvasContext = canvasContext;
-    		
+
 			gradientValueMax.innerText = Math.max.apply(Math, ctrl.panel.thresholds.split(','));
 			gradientValueMin.innerText = Math.min.apply(Math, ctrl.panel.thresholds.split(','));
     	}
-    	
+
     	function updateSize(){
     		elem.css('height', ctrl.height + 'px');
     	}
-    	
+
     	function getVisSize(dataPoint){
     		if(ctrl.panel.treeMap.sizeByFunction == 'constant') return 1;
     		else {
         		return dataPoint[ctrl.panel.treeMap.sizeByFunction] || dataPoint.value;
     		}
     	}
-    	
+
     	function getVisColor(dataPoint){
     		var value = dataPoint[ctrl.panel.treeMap.colorByFunction] || dataPoint.value;
     		var rgbColor = ctrl.getGradientForValue({thresholds: ctrl.panel.thresholds.split(',')}, value);
 			var hexColor = colorToHex(rgbColor);
 			return hexColor;
     	}
-    	
-    	
+
+
     	function updateChart(data){
     		d3.select("#"+ctrl.containerDivId).selectAll('*').remove();
-    		
+
     		// Make sure the necessary IDs are added
     		var idKeys = Array.from(ctrl.panel.treeMap.ids);
     		if(idKeys.length == 0){
@@ -378,8 +433,8 @@ class HeatmapCtrl extends MetricsPanelCtrl {
     		if(ctrl.panel.treeMap.enableTimeBlocks){
     			ensureArrayContains(idKeys, 'timestamp');
     		}
-    		
-    		// Setup Aggregations 
+
+    		// Setup Aggregations
     		var aggs = {};
     		aggs.value = ctrl.panel.treeMap.aggregationFunction;
     		aggs.current = ctrl.panel.treeMap.aggregationFunction;
@@ -388,7 +443,7 @@ class HeatmapCtrl extends MetricsPanelCtrl {
     		aggs.avg = 'mean';
     		aggs.min = 'min';
     		aggs.max = 'max';
-    		
+
     		d3plus.viz()
 				.dev(ctrl.panel.treeMap.debug)
     			.aggs(aggs)
@@ -396,7 +451,7 @@ class HeatmapCtrl extends MetricsPanelCtrl {
     			.legend(ctrl.panel.treeMap.showLegend)
     			.data(data)
     			//.type("tree_map")
-    			.type({"mode": ctrl.panel.treeMap.mode})    // sets the mode of visualization display based on type    
+    			.type({"mode": ctrl.panel.treeMap.mode})    // sets the mode of visualization display based on type
     			.id({
     				"value": _.uniq(idKeys),
     				"grouping": ctrl.panel.treeMap.enableGrouping
@@ -409,8 +464,8 @@ class HeatmapCtrl extends MetricsPanelCtrl {
     			.format(visFormat)
     			.draw();
     	}
-    	
-    	
+
+
     	this.events.on('render', function onRender(data) {
     		if(typeof d3plus !== 'undefined' && data){
     			render(data);
@@ -419,7 +474,7 @@ class HeatmapCtrl extends MetricsPanelCtrl {
     			console.info('d3plus is not loaded yet');
     		}
 	    });
-	    
+
 	}
 // End Class
 }
@@ -438,11 +493,11 @@ function colorToHex(color) {
     while(digits.length < 3){
     	digits.push(255);
     }
-    
+
     var red = parseInt(digits[0]);
     var green = parseInt(digits[1]);
     var blue = parseInt(digits[2]);
-    
+
     var rgba = blue | (green << 8) | (red << 16);
     return '#' + rgba.toString(16);
 };
@@ -450,7 +505,7 @@ function colorToHex(color) {
 function getColorByXPercentage(canvas, xPercent){
 	var x = canvas.width * xPercent || 0;
 	var context = canvas.getContext("2d");
-    var p = context.getImageData(x, 1, 1, 1).data; 
+    var p = context.getImageData(x, 1, 1, 1).data;
     var color = 'rgba('+[p[0] +','+ p[1] +','+ p[2] +','+ p[3]]+')';
     return color;
 }

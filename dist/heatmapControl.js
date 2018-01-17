@@ -122,6 +122,25 @@ System.register(['./libs/d3/d3', 'app/core/time_series2', 'app/core/utils/kbn', 
 					current: true,
 					total: true
 				},
+				/**
+     * @detangleEdit start
+     * @author Ural
+     */
+				// Detangle Options
+				detangle: {
+					coupling: false,
+					sortingOrder: 'desc',
+					limit: null,
+					metric: 'coupling',
+					sourceType: '$issue_type',
+					targetType: '$target_issue_type',
+					sourceTypeData: '',
+					targetTypeData: ''
+				},
+				/**
+     * @detangleEdit end
+     * @author Ural
+     */
 				maxDataPoints: 100,
 				mappingType: 1,
 				nullPointMode: 'connected',
@@ -144,13 +163,14 @@ System.register(['./libs/d3/d3', 'app/core/time_series2', 'app/core/utils/kbn', 
 			_export('MetricsPanelCtrl', _export('HeatmapCtrl', HeatmapCtrl = function (_MetricsPanelCtrl) {
 				_inherits(HeatmapCtrl, _MetricsPanelCtrl);
 
-				function HeatmapCtrl($scope, $injector, $sce) {
+				function HeatmapCtrl($scope, $injector, $sce, detangleSrv, templateSrv) {
 					_classCallCheck(this, HeatmapCtrl);
 
 					var _this2 = _possibleConstructorReturn(this, (HeatmapCtrl.__proto__ || Object.getPrototypeOf(HeatmapCtrl)).call(this, $scope, $injector));
 
 					_.defaults(_this2.panel, panelDefaults);
-
+					_this2.detangleSrv = detangleSrv;
+					_this2.templateSrv = templateSrv;
 					_this2.options = panelOptions;
 					_this2.panel.chartId = 'chart_' + _this2.panel.id;
 					_this2.containerDivId = 'container_' + _this2.panel.chartId;
@@ -180,6 +200,18 @@ System.register(['./libs/d3/d3', 'app/core/time_series2', 'app/core/utils/kbn', 
 							console.log('d3plus is loaded');
 							_this.events.emit('data-received');
 						});
+
+						/**
+       * @detangleEdit start
+       * @author Ural
+       */
+						this.sortingOrder = [{ text: 'Ascending', value: 'asc' }, { text: 'Descending', value: 'desc' }];
+
+						this.couplingMetrics = [{ text: 'Coupling Value', value: 'coupling' }, { text: 'Num. of Couples', value: 'couplecounts' }];
+						/**
+       * @detangleEdit end
+       * @author Ural
+       */
 					}
 				}, {
 					key: 'handleError',
@@ -191,6 +223,7 @@ System.register(['./libs/d3/d3', 'app/core/time_series2', 'app/core/utils/kbn', 
 					value: function onInitEditMode() {
 						this.addEditorTab('Heatmap', heatmapEditor, 2);
 						this.addEditorTab('Display', displayEditor, 3);
+						this.addEditorTab('Detangle', 'public/app/plugins/panel/graph/detangle.html', 4);
 					}
 				}, {
 					key: 'getPanelContainer',
@@ -203,8 +236,23 @@ System.register(['./libs/d3/d3', 'app/core/time_series2', 'app/core/utils/kbn', 
 						console.info('received data');
 						console.debug(dataList);
 						if (undefined != dataList) {
+							/**
+        * @detangleEdit start
+        * @author Ural
+        */
+							this.panel.detangle.sourceTypeData = this.templateSrv.replaceWithText(this.panel.detangle.sourceType, this.panel.scopedVars);
+							this.panel.detangle.targetTypeData = this.templateSrv.replaceWithText(this.panel.detangle.targetType, this.panel.scopedVars);
+
+							if (this.panel.detangle.coupling) {
+								dataList = this.detangleSrv.dataConvertor(dataList, this.panel.detangle, 'file');
+							}
+							/**
+        * @detangleEdit end
+        * @author Ural
+        */
 							this.series = dataList.map(this.seriesHandler.bind(this));
 							console.info('mapped dataList to series');
+							console.log(this.series);
 						}
 
 						var preparedData = this.d3plusDataProcessor(this.series);
@@ -483,7 +531,7 @@ System.register(['./libs/d3/d3', 'app/core/time_series2', 'app/core/utils/kbn', 
 								ensureArrayContains(idKeys, 'timestamp');
 							}
 
-							// Setup Aggregations 
+							// Setup Aggregations
 							var aggs = {};
 							aggs.value = ctrl.panel.treeMap.aggregationFunction;
 							aggs.current = ctrl.panel.treeMap.aggregationFunction;
@@ -495,7 +543,7 @@ System.register(['./libs/d3/d3', 'app/core/time_series2', 'app/core/utils/kbn', 
 
 							d3plus.viz().dev(ctrl.panel.treeMap.debug).aggs(aggs).container("#" + ctrl.containerDivId).legend(ctrl.panel.treeMap.showLegend).data(data)
 							//.type("tree_map")
-							.type({ "mode": ctrl.panel.treeMap.mode }) // sets the mode of visualization display based on type    
+							.type({ "mode": ctrl.panel.treeMap.mode }) // sets the mode of visualization display based on type
 							.id({
 								"value": _.uniq(idKeys),
 								"grouping": ctrl.panel.treeMap.enableGrouping
