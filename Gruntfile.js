@@ -3,6 +3,7 @@ module.exports = (grunt) => {
 
   grunt.loadNpmTasks('grunt-execute');
   grunt.loadNpmTasks('grunt-contrib-clean');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
 
   grunt.initConfig({
 
@@ -71,8 +72,19 @@ module.exports = (grunt) => {
         }]
       },
     },
+    uglify: {
+      options: {
+        mangle: false
+      },
+      dist: {
+        files: {
+          'dist/module.js': ['dist/module.js'],
+          'dist/heatmapControl.js': ['dist/heatmapControl.js'],
+        }
+      }
+    },
 
   });
 
-  grunt.registerTask('default', ['clean', 'copy:src_to_dist', 'copy:libs_to_dist', 'copy:readme', 'copy:img_to_dist', 'sass', 'babel']);
+  grunt.registerTask('default', ['clean', 'copy:src_to_dist', 'copy:libs_to_dist', 'copy:readme', 'copy:img_to_dist', 'sass', 'babel', 'uglify']);
 };

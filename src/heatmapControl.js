@@ -99,7 +99,6 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 			});
 
 		SystemJS.import(d3plusPath).then(function d3plusLoaded(){
-			console.log('d3plus is loaded');
 			_this.events.emit('data-received');
 		});
 
@@ -138,8 +137,6 @@ class HeatmapCtrl extends MetricsPanelCtrl {
 	}
 
 	onDataReceived(dataList){
-		console.info('received data');
-		console.debug(dataList);
 		if(undefined != dataList) {
       /**
        * @detangleEdit start
@@ -156,8 +153,6 @@ class HeatmapCtrl extends MetricsPanelCtrl {
        * @author Ural
        */
 			this.series = dataList.map(this.seriesHandler.bind(this));
-			console.info('mapped dataList to series');
-			console.log(this.series);
 		}
 
 		var preparedData = this.d3plusDataProcessor(this.series);
