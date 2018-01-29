@@ -146,7 +146,7 @@ class HeatmapCtrl extends MetricsPanelCtrl {
       this.panel.detangle.targetTypeData = this.templateSrv.replaceWithText(this.panel.detangle.targetType, this.panel.scopedVars);
 
       if (this.panel.detangle.coupling) {
-        dataList = this.detangleSrv.dataConvertor(dataList, this.panel.detangle, 'file');
+        dataList = this.detangleSrv.dataConvertor(dataList, this.panel.detangle);
       }
       /**
        * @detangleEdit end
