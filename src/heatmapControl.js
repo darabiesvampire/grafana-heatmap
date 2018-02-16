@@ -44,6 +44,8 @@ const panelDefaults = {
     targetType: '$target_issue_type',
     sourceTypeData: '',
     targetTypeData: '',
+    issueTitle: '$issue_title',
+    issueTitleData: '',
   },
   /**
    * @detangleEdit end
@@ -144,6 +146,8 @@ class HeatmapCtrl extends MetricsPanelCtrl {
        */
       this.panel.detangle.sourceTypeData = this.templateSrv.replaceWithText(this.panel.detangle.sourceType, this.panel.scopedVars);
       this.panel.detangle.targetTypeData = this.templateSrv.replaceWithText(this.panel.detangle.targetType, this.panel.scopedVars);
+      this.panel.detangle.issueTitleData = this.templateSrv.replaceWithText(this.panel.detangle.issueTitle, this.panel.scopedVars);
+
 
       if (this.panel.detangle.coupling) {
         dataList = this.detangleSrv.dataConvertor(dataList, this.panel.detangle);
