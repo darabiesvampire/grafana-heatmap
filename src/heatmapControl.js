@@ -44,8 +44,12 @@ const panelDefaults = {
     targetType: '$target_issue_type',
     sourceTypeData: '',
     targetTypeData: '',
+    minIssuesPerFile: null,
+    minEntriesData: '',
     issueTitle: '$issue_title',
     issueTitleData: '',
+    fileExcludeFilter: '$file_exclude',
+    fileExcludeFilterData: '',
   },
   /**
    * @detangleEdit end
@@ -147,7 +151,12 @@ class HeatmapCtrl extends MetricsPanelCtrl {
       this.panel.detangle.sourceTypeData = this.templateSrv.replaceWithText(this.panel.detangle.sourceType, this.panel.scopedVars);
       this.panel.detangle.targetTypeData = this.templateSrv.replaceWithText(this.panel.detangle.targetType, this.panel.scopedVars);
       this.panel.detangle.issueTitleData = this.templateSrv.replaceWithText(this.panel.detangle.issueTitle, this.panel.scopedVars);
-
+      this.panel.detangle.fileExcludeFilterData = this.templateSrv.replaceWithText(this.panel.detangle.fileExcludeFilter,
+        this.panel.scopedVars);
+      if (this.panel.detangle.minIssuesPerFile) {
+        this.panel.detangle.minEntriesData = this.templateSrv.replaceWithText(this.panel.detangle.minIssuesPerFile,
+          this.panel.scopedVars);
+      }
 
       if (this.panel.detangle.coupling) {
         dataList = this.detangleSrv.dataConvertor(dataList, this.panel.detangle);
