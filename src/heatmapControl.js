@@ -9,7 +9,7 @@ import './series_overrides_heatmap_ctrl';
 import './css/heatmap.css!';
 
 const panelOptions = {
-	aggregationFunctions: ['avg', 'min', 'max', 'total', 'current', 'count'],
+	aggregationFunctions: ['avg', 'min', 'max', 'total', 'current', 'count', 'reverse'],
 	treeMap:{
     	modes: ['squarify', 'slice', 'dice', 'slice-dice'],
     	aggregationFunctions: ['sum', 'min', 'max', 'extent', 'mean', 'median', 'quantile', 'variance', 'deviation'],
@@ -122,6 +122,8 @@ class HeatmapCtrl extends MetricsPanelCtrl {
     this.couplingMetrics = [
       {text: 'Coupling Value', value: 'coupling'},
       {text: 'Num. of Couples', value: 'couplecounts'},
+      {text: 'Cohesion Value', value: 'cohesion'},
+
     ];
     /**
      * @detangleEdit end
@@ -419,7 +421,12 @@ class HeatmapCtrl extends MetricsPanelCtrl {
     	}
 
     	function getVisSize(dataPoint){
-    		if(ctrl.panel.treeMap.sizeByFunction == 'constant') return 1;
+    		if(ctrl.panel.treeMap.sizeByFunction == 'constant') {
+    			return 1;
+        }
+    		else if (ctrl.panel.treeMap.sizeByFunction == 'reverse') {
+    			return 1 / dataPoint['total'];
+				}
     		else {
         		return dataPoint[ctrl.panel.treeMap.sizeByFunction] || dataPoint.value;
     		}
