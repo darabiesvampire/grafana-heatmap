@@ -52,6 +52,7 @@ const panelDefaults = {
     fileExcludeFilterData: '',
     metricRange: '$metric_range',
     metricRangeData: '',
+    cohesionCalculationMethod: 'standard',
   },
   /**
    * @detangleEdit end
@@ -124,6 +125,15 @@ class HeatmapCtrl extends MetricsPanelCtrl {
       {text: 'Num. of Couples', value: 'couplecounts'},
       {text: 'Cohesion Value', value: 'cohesion'},
 
+    ];
+
+    this.cohesionCalculationMethods = [
+      {
+        text: 'Standard', value: 'standard'
+      },
+      {
+        text: 'Double', value: 'double'
+      }
     ];
     /**
      * @detangleEdit end
