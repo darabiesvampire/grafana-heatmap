@@ -53,6 +53,7 @@ const panelDefaults = {
     metricRange: '$metric_range',
     metricRangeData: '',
     cohesionCalculationMethod: 'standard',
+    isAuthorDashboard: false,
   },
   /**
    * @detangleEdit end
