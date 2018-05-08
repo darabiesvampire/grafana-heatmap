@@ -44,12 +44,16 @@ const panelDefaults = {
     targetType: '$target_issue_type',
     sourceTypeData: '',
     targetTypeData: '',
-    minIssuesPerFile: null,
-    minEntriesData: '',
+	minIssuesPerFile: null,
+	minIssuesData: '',
+	minFilesPerIssue: null,
+	minFilesData: '',
     issueTitle: '$issue_title',
     issueTitleData: '',
     fileExcludeFilter: '$file_exclude',
-    fileExcludeFilterData: '',
+	fileExcludeFilterData: '',
+	fileGroup: '$file_group',
+	fileGroupData: '',
     metricRange: '$metric_range',
     metricRangeData: '',
     cohesionCalculationMethod: 'standard',
@@ -166,14 +170,19 @@ class HeatmapCtrl extends MetricsPanelCtrl {
       this.panel.detangle.sourceTypeData = this.templateSrv.replaceWithText(this.panel.detangle.sourceType, this.panel.scopedVars);
       this.panel.detangle.targetTypeData = this.templateSrv.replaceWithText(this.panel.detangle.targetType, this.panel.scopedVars);
       this.panel.detangle.issueTitleData = this.templateSrv.replaceWithText(this.panel.detangle.issueTitle, this.panel.scopedVars);
-      this.panel.detangle.metricRangeData = this.templateSrv.replaceWithText(this.panel.detangle.metricRange, this.panel.scopedVars);
+	  this.panel.detangle.metricRangeData = this.templateSrv.replaceWithText(this.panel.detangle.metricRange, this.panel.scopedVars);
+	  this.panel.detangle.fileGroupData = this.templateSrv.replaceWithText(this.panel.detangle.fileGroup, this.panel.scopedVars);
       this.panel.detangle.fileExcludeFilterData = this.templateSrv.replaceWithText(this.panel.detangle.fileExcludeFilter,
         this.panel.scopedVars);
-      if (this.panel.detangle.minIssuesPerFile) {
-        this.panel.detangle.minEntriesData = this.templateSrv.replaceWithText(this.panel.detangle.minIssuesPerFile,
-          this.panel.scopedVars);
-      }
-
+	  if (this.panel.detangle.minIssuesPerFile) {
+		this.panel.detangle.minIssuesData = this.templateSrv.replaceWithText(this.panel.detangle.minIssuesPerFile,
+			this.panel.scopedVars);
+		}
+	  if (this.panel.detangle.minFilesPerIssue) {
+		this.panel.detangle.minFilesData = this.templateSrv.replaceWithText(this.panel.detangle.minFilesPerIssue,
+			this.panel.scopedVars);
+	 }
+	  
       if (this.panel.detangle.coupling) {
         dataList = this.detangleSrv.dataConvertor(dataList, this.panel.detangle);
       }
