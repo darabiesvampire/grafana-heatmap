@@ -167,26 +167,9 @@ class HeatmapCtrl extends MetricsPanelCtrl {
        * @detangleEdit start
        * @author Ural
        */
-      this.panel.detangle.sourceTypeData = this.templateSrv.replaceWithText(this.panel.detangle.sourceType, this.panel.scopedVars);
-      this.panel.detangle.targetTypeData = this.templateSrv.replaceWithText(this.panel.detangle.targetType, this.panel.scopedVars);
-      this.panel.detangle.issueTitleData = this.templateSrv.replaceWithText(this.panel.detangle.issueTitle, this.panel.scopedVars);
-	  	this.panel.detangle.metricRangeData = this.templateSrv.replaceWithText(this.panel.detangle.metricRange, this.panel.scopedVars);
-	  	this.panel.detangle.fileGroupData = this.templateSrv.replaceWithText(this.panel.detangle.fileGroup, this.panel.scopedVars);
-      this.panel.detangle.fileExcludeFilterData = this.templateSrv.replaceWithText(this.panel.detangle.fileExcludeFilter,
-        this.panel.scopedVars);
-      this.panel.detangle.fileHighlightData = this.templateSrv.replaceWithText('$file_highlight', this.panel.scopedVars);
-      this.panel.detangle.fileIncludeFilterData = this.templateSrv.replaceWithText('$file_include', this.panel.scopedVars);
-	  if (this.panel.detangle.minIssuesPerFile) {
-		this.panel.detangle.minIssuesData = this.templateSrv.replaceWithText(this.panel.detangle.minIssuesPerFile,
-			this.panel.scopedVars);
-		}
-	  if (this.panel.detangle.minFilesPerIssue) {
-		this.panel.detangle.minFilesData = this.templateSrv.replaceWithText(this.panel.detangle.minFilesPerIssue,
-			this.panel.scopedVars);
-	 }
-	  
+
       if (this.panel.detangle.coupling) {
-        dataList = this.detangleSrv.dataConvertor(dataList, this.panel.detangle);
+        dataList = this.detangleSrv.dataConvertor(dataList, this.templateSrv, this.panel.detangle);
       }
       /**
        * @detangleEdit end
